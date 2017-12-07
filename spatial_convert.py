@@ -3,7 +3,29 @@
 # Latitude/Longitude to/from Web Mercator
 import math
 from pyproj import Proj, transform
+from cartopy import crs
  
+
+
+inProj = Proj(init='epsg:4326')
+outProj = Proj(init = 'epsg:3857')
+
+def towgs84(row):
+    """
+    convert lon_lat epsg:4326 to WebMercator epsg:3857 on Pandas Series
+    """
+    return pd.Series(transform(inProj, outProj, row['longitude'], row['latitude']))
+
+
+def transform_coords(df):
+    df = df.copy()
+    lons = np.array(df['longitude'])
+    lats = np.array(df['latitude'])
+    coords = crs.GOOGLE_MERCATOR.transform_points(crs.PlateCarree(), lons, lats)
+    df['longitude'] = coords[:, 0]
+    df['latitude']  = coords[:, 1]
+    return df
+
 def toWGS84(xLon, yLat):
     """ 
     convert WebMercator epsg:3857 to lon_lat epsg:4326 mathematically per point
@@ -40,14 +62,3 @@ def toWebMercator(xLon, yLat):
     easting = semimajorAxis * east
  
     return [easting, northing]
-
-
-inProj = Proj(init='epsg:4326')
-outProj = Proj(init = 'epsg:3857')
-
-def towgs84(row):
-    """
-    convert lon_lat epsg:4326 to WebMercator epsg:3857 on Pandas Series
-    """
-    return pd.Series(transform(inProj, outProj, row['longitude'], row['latitude']))
-
