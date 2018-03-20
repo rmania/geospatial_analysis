@@ -3,7 +3,8 @@
 # Latitude/Longitude to/from Web Mercator
 import math
 from pyproj import Proj, transform
-from cartopy import crs
+import numpy as np
+#from cartopy import crs
  
 
 
@@ -62,3 +63,29 @@ def toWebMercator(xLon, yLat):
     easting = semimajorAxis * east
  
     return [easting, northing]
+
+def lonlat_to_meters(df, lon_column, lat_column):
+    """
+    function 1 to convert to WebMercator format
+    Convert longitude, latitude GPS coordinates into meters west and north of Greenwich (Web Mercator format). This makes it easier to overlay those with tiles from map providers.
+    args:
+        df: pandas Dataframe
+        lon_name: dataframe column where the longitude coordinates are stored
+        lat_name: dataframe column where the latitude coordinates are stored
+    example:
+        lonlat_to_meters(df, 'lon', 'lat')
+    returns:
+        df with converted coordinates
+    """
+    lat = df[lat_column]
+    lon = df[lon_column]
+    df.loc[:, ('x')] = df.loc[:, (lat_column)]
+    df.loc[:, ('y')] = df.loc[:, (lon_column)]
+    origin_shift = 2 * np.pi * 6378137 / 2.0
+    mx = lon * origin_shift / 180.0
+    my = np.log(np.tan((90 + lat) * np.pi / 360.0)) / (np.pi / 180.0)
+    my = my * origin_shift / 180.0
+    df.loc[:, 'x'] = mx
+    df.loc[:, 'y'] = my
+    
+    return df
