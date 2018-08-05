@@ -1,13 +1,16 @@
 #!/usr/bin/python
+import pandas as pd
 import configparser
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
+import sys
+sys.path.insert(0, '../')
  
-def config(filename='config.ini', section='postgresql'):
+def config(config_path = '../', filename='config.ini', section='postgresql'):
     # create a parser.
     parser = configparser.ConfigParser()
     # read config file
-    parser.read(filename)
+    parser.read(config_path + filename)
  
     # get section, default to postgresql
     db = {}
@@ -19,7 +22,6 @@ def config(filename='config.ini', section='postgresql'):
         raise Exception('Section {0} not found in the {1} file'.format(section, filename))
  
     return db
-
 
 def postgres_engine_pandas(config_full_path, db_config_name):
     """
@@ -70,3 +72,37 @@ def psycopg_connection_string(config_full_path, db_config_name):
     return 'host={} port={} user={} dbname={} password={}'.format(
         host, port, user, dbname, password
     )
+
+
+# load csv to PostgreSQL database, write to 'OSM' schema
+def load_csv_to_postgres(datadir, filename, table_name, schema,
+                         config_path, config_name, all_csv=None):
+    """
+    Load csv into postgres for single & multiple files
+    Args:
+        datadir: data directory where file to be uploaded is stored. f.i. data/
+        filename: name of the csv
+        table_name: table_name in the Postgres db (needs to be present!)
+        schema: the schema in postgreSQL where data file should land
+        config_path: path to the config file. f.i. auth/config.ini
+        config_name: name of the databse config. f.i. 'postgresql'
+        all_csv = default false. If True will upload all the csv files in the datadir.
+        """
+    
+    df = pd.read_csv(datadir + filename)
+        
+    if all_csv:
+        csv_files = [glob.glob(x) for x in [datadir + '*.csv']]
+        for csv_file in csv_files:
+            df = pd.read_csv(datadir + csv_file)
+        
+    # establish engine
+    engine = postgres_engine_pandas(config_path, config_name)
+    print (engine)
+    
+    table_name = table_name
+    
+    df.to_sql(table_name, engine, schema = schema,
+              if_exists='replace', 
+              index=True, 
+              index_label='idx')  
