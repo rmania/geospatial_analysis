@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 import requests
+import geopandas as gp
 import time
 from datetime import datetime
 import xml.etree.ElementTree as ET
 from logger_settings import logger
 
 logger = logger()
-
+url_wfs = 'https://map.data.amsterdam.nl/maps/gebieden'
 
 def get_available_layers_from_wfs(url_wfs):
     """
@@ -78,3 +79,58 @@ def get_layer_from_wfs(url_wfs, layer_name, crs, outputformat, retry_count=3):
         return geojson
     
     return response
+
+
+# sub-functions to return cleaned up geoframes
+
+def get_sd_layer():
+    """
+    load wfs layer stadsdeel (Amsterdam boroughs) f.i. 'West'
+    """
+    sd = get_layer_from_wfs(url_wfs=url_wfs, 
+                            layer_name='stadsdeel', 
+                            crs=28992, 
+                            outputformat='geojson')
+    # to geodataframe
+    cols_to_keep = ['code', 'geometry', 'id', 'naam']
+    crs = {'init': 'epsg:28992'}
+    sd = gp.GeoDataFrame.from_features(sd['features'], crs = crs)[cols_to_keep]
+    sd = sd.rename(columns={'code': 'sd_code', 'id': 'sd_id', 'naam': 'sd_name'})
+    
+    return sd
+
+
+def get_bc_layer():
+    """
+    load wfs layer buurtcombinatie (Amsterdam districts) f.i. 'De Pijp'
+    """
+    buurt_combi = get_layer_from_wfs(url_wfs=url_wfs, 
+                            layer_name='buurtcombinatie', 
+                            crs=28992, 
+                            outputformat='geojson')
+    # to geodataframe
+    cols_to_keep = ['geometry', 'id', 'naam']
+    crs = {'init': 'epsg:28992'}
+    buurt_combi = gp.GeoDataFrame.from_features(buurt_combi['features'], crs = crs)[cols_to_keep]
+    buurt_combi = buurt_combi.rename(columns ={'id': 'bc_id', 'naam': 'bc_name'})
+    
+    return buurt_combi
+
+
+def get_buurt_layer():
+    """
+    load wfs layer buurtcombinatie (Amsterdam neighbourhoods) f.i. 'Gein Zuidoost'
+    """
+    buurt = get_layer_from_wfs(url_wfs=url_wfs, 
+                            layer_name='buurt', 
+                            crs=28992, 
+                            outputformat='geojson')
+    # to geodataframe
+    cols_to_keep = ['geometry', 'id', 'naam']
+    crs = {'init': 'epsg:28992'}
+    buurt = gp.GeoDataFrame.from_features(buurt['features'], crs = crs)[cols_to_keep]
+    buurt = buurt.rename(columns ={'id': 'b_id', 'naam': 'b_name'})
+    
+    return buurt
+
+
