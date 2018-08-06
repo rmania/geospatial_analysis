@@ -96,6 +96,7 @@ def get_sd_layer():
     crs = {'init': 'epsg:28992'}
     sd = gp.GeoDataFrame.from_features(sd['features'], crs = crs)[cols_to_keep]
     sd = sd.rename(columns={'code': 'sd_code', 'id': 'sd_id', 'naam': 'sd_name'})
+    sd.name = 'stadsdelen'
     
     return sd
 
@@ -113,6 +114,7 @@ def get_bc_layer():
     crs = {'init': 'epsg:28992'}
     buurt_combi = gp.GeoDataFrame.from_features(buurt_combi['features'], crs = crs)[cols_to_keep]
     buurt_combi = buurt_combi.rename(columns ={'id': 'bc_id', 'naam': 'bc_name'})
+    buurt_combi.name = 'buurt_combinatie'
     
     return buurt_combi
 
@@ -130,6 +132,7 @@ def get_buurt_layer():
     crs = {'init': 'epsg:28992'}
     buurt = gp.GeoDataFrame.from_features(buurt['features'], crs = crs)[cols_to_keep]
     buurt = buurt.rename(columns ={'id': 'b_id', 'naam': 'b_name'})
+    buurt.name = 'buurt'
     
     return buurt
 
